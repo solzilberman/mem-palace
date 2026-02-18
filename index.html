@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image Sequence Memory Trainer</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Configuration -->
+    <section id="config" class="screen active">
+      <h1>Image Sequence Memory Trainer</h1>
+      <form id="config-form">
+        <label>
+          Number of images
+          <input type="number" id="image-count" min="5" max="30" value="10">
+        </label>
+        <label>
+          Memorization time (seconds)
+          <input type="number" id="memory-time" min="30" max="300" value="60">
+        </label>
+        <label>
+          Recall time (seconds)
+          <input type="number" id="recall-time" min="60" max="600" value="240">
+        </label>
+        <label>
+          Prepare countdown (seconds)
+          <input type="number" id="prepare-time" min="5" max="60" value="30">
+        </label>
+        <button type="submit">Start</button>
+      </form>
+    </section>
+
+    <!-- Prepare -->
+    <section id="prepare" class="screen">
+      <h2>Prepare</h2>
+      <p id="prepare-countdown">30</p>
+      <div id="prepare-loading-wrap">
+        <div id="prepare-loading-bar"></div>
+      </div>
+      <p id="prepare-loading-text">Loading images...</p>
+      <button id="skip-prepare">Skip</button>
+    </section>
+
+    <!-- Memory -->
+    <section id="memory" class="screen">
+      <div class="memory-header">
+        <span id="memory-timer">1:00</span>
+        <button id="finished-btn">Finished</button>
+      </div>
+      <div id="memory-container">
+        <button id="memory-prev" aria-label="Previous">←</button>
+        <div id="memory-image-wrap">
+          <img id="memory-image" src="" alt="Memory image">
+          <span id="memory-position">1 / 10</span>
+        </div>
+        <button id="memory-next" aria-label="Next">→</button>
+      </div>
+    </section>
+
+    <!-- Recall -->
+    <section id="recall" class="screen">
+      <div class="recall-header">
+        <span id="recall-timer">4:00</span>
+        <span id="recall-hint">Click empty box to select, then click image to place</span>
+        <button id="submit-recall">Submit</button>
+      </div>
+      <div id="recall-grid">
+        <div id="recall-slots"></div>
+        <div id="recall-pool"></div>
+      </div>
+    </section>
+
+    <!-- Stats -->
+    <section id="stats" class="screen">
+      <h2>Results</h2>
+      <div id="stats-content"></div>
+      <button id="play-again">Play Again</button>
+    </section>
+  </div>
+  <script src="main.js" type="module"></script>
+</body>
+</html>
