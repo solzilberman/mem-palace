@@ -3,81 +3,155 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Image Sequence Memory Trainer</title>
+  <title>Memory Trainer</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div id="app">
-    <!-- Configuration -->
-    <section id="config" class="screen active">
-      <h1>Image Sequence Memory Trainer</h1>
-      <form id="config-form">
-        <label>
-          Number of images
-          <input type="number" id="image-count" min="5" max="30" value="10">
-        </label>
-        <label>
-          Memorization time (seconds)
-          <input type="number" id="memory-time" min="30" max="300" value="60">
-        </label>
-        <label>
-          Recall time (seconds)
-          <input type="number" id="recall-time" min="60" max="600" value="240">
-        </label>
-        <label>
-          Prepare countdown (seconds)
-          <input type="number" id="prepare-time" min="5" max="60" value="30">
-        </label>
-        <button type="submit">Start</button>
-      </form>
+    <!-- Main Menu -->
+    <section id="menu" class="screen active">
+      <h1>Memory Trainer</h1>
+      <div id="game-menu" class="game-menu"></div>
     </section>
 
-    <!-- Prepare -->
-    <section id="prepare" class="screen">
-      <h2>Prepare</h2>
-      <p id="prepare-countdown">30</p>
-      <div id="prepare-loading-wrap">
-        <div id="prepare-loading-bar"></div>
-      </div>
-      <p id="prepare-loading-text">Loading images...</p>
-      <button id="skip-prepare">Skip</button>
-    </section>
-
-    <!-- Memory -->
-    <section id="memory" class="screen">
-      <div class="memory-header">
-        <span id="memory-timer">1:00</span>
-        <button id="finished-btn">Finished</button>
-      </div>
-      <div id="memory-container">
-        <button id="memory-prev" aria-label="Previous">←</button>
-        <div id="memory-image-wrap">
-          <img id="memory-image" src="" alt="Memory image">
-          <span id="memory-position">1 / 10</span>
+    <!-- Image Game -->
+    <div id="game-image" class="game-panel">
+      <section id="image-config" class="screen" data-game="image">
+        <div class="screen-header">
+          <button id="image-back" class="btn-back">← Back</button>
+          <h2>Image Sequence</h2>
         </div>
-        <button id="memory-next" aria-label="Next">→</button>
-      </div>
-    </section>
+        <form id="image-config-form">
+          <label>Number of images
+            <input type="number" id="image-count" min="5" max="30" value="10">
+          </label>
+          <label>Memorization time (seconds)
+            <input type="number" id="image-memory-time" min="30" max="300" value="60">
+          </label>
+          <label>Recall time (seconds)
+            <input type="number" id="image-recall-time" min="60" max="600" value="240">
+          </label>
+          <label>Prepare countdown (seconds)
+            <input type="number" id="image-prepare-time" min="5" max="60" value="30">
+          </label>
+          <button type="submit">Start</button>
+        </form>
+      </section>
 
-    <!-- Recall -->
-    <section id="recall" class="screen">
-      <div class="recall-header">
-        <span id="recall-timer">4:00</span>
-        <span id="recall-hint">Click empty box to select, then click image to place</span>
-        <button id="submit-recall">Submit</button>
-      </div>
-      <div id="recall-grid">
-        <div id="recall-slots"></div>
-        <div id="recall-pool"></div>
-      </div>
-    </section>
+      <section id="image-prepare" class="screen" data-game="image">
+        <h2>Prepare</h2>
+        <p id="image-prepare-countdown">30</p>
+        <div id="image-prepare-loading-wrap" class="loading-wrap">
+          <div id="image-prepare-loading-bar" class="loading-bar"></div>
+        </div>
+        <p id="image-prepare-loading-text">Loading images...</p>
+        <button id="image-skip-prepare">Skip</button>
+      </section>
 
-    <!-- Stats -->
-    <section id="stats" class="screen">
-      <h2>Results</h2>
-      <div id="stats-content"></div>
-      <button id="play-again">Play Again</button>
-    </section>
+      <section id="image-memory" class="screen" data-game="image">
+        <div class="memory-header">
+          <span id="image-memory-timer">1:00</span>
+          <button id="image-finished-btn">Finished</button>
+        </div>
+        <div class="memory-container">
+          <button id="image-memory-prev" aria-label="Previous">←</button>
+          <div class="memory-image-wrap">
+            <img id="image-memory-image" src="" alt="Memory image">
+            <span id="image-memory-position">1 / 10</span>
+          </div>
+          <button id="image-memory-next" aria-label="Next">→</button>
+        </div>
+      </section>
+
+      <section id="image-recall" class="screen" data-game="image">
+        <div class="recall-header">
+          <span id="image-recall-timer">4:00</span>
+          <span class="recall-hint">Click empty box to select, then click image to place</span>
+          <button id="image-submit-recall">Submit</button>
+        </div>
+        <div class="recall-grid">
+          <div id="image-recall-slots" class="recall-slots"></div>
+          <div id="image-recall-pool" class="recall-pool"></div>
+        </div>
+      </section>
+
+      <section id="image-stats" class="screen" data-game="image">
+        <h2>Results</h2>
+        <div id="image-stats-content"></div>
+        <div class="stats-actions">
+          <button id="image-play-again">Play Again</button>
+          <button id="image-stats-back">Back to Menu</button>
+        </div>
+      </section>
+    </div>
+
+    <!-- Card Game -->
+    <div id="game-card" class="game-panel">
+      <section id="card-config" class="screen" data-game="card">
+        <div class="screen-header">
+          <button id="card-back" class="btn-back">← Back</button>
+          <h2>Card Sequence</h2>
+        </div>
+        <form id="card-config-form">
+          <label>Number of cards
+            <input type="number" id="card-count" min="5" max="20" value="8">
+          </label>
+          <label>Memorization time (seconds)
+            <input type="number" id="card-memory-time" min="30" max="300" value="45">
+          </label>
+          <label>Recall time (seconds)
+            <input type="number" id="card-recall-time" min="60" max="600" value="180">
+          </label>
+          <label>Prepare countdown (seconds)
+            <input type="number" id="card-prepare-time" min="3" max="30" value="10">
+          </label>
+          <button type="submit">Start</button>
+        </form>
+      </section>
+
+      <section id="card-prepare" class="screen" data-game="card">
+        <h2>Prepare</h2>
+        <p id="card-prepare-countdown">10</p>
+        <p id="card-prepare-loading-text">Shuffling deck...</p>
+        <button id="card-skip-prepare">Skip</button>
+      </section>
+
+      <section id="card-memory" class="screen" data-game="card">
+        <div class="memory-header">
+          <span id="card-memory-timer">0:45</span>
+          <button id="card-finished-btn">Finished</button>
+        </div>
+        <div class="memory-container">
+          <button id="card-memory-prev" aria-label="Previous">←</button>
+          <div class="memory-image-wrap memory-image-wrap-card">
+            <img id="card-memory-image" src="" alt="Memory card">
+            <span id="card-memory-position">1 / 8</span>
+          </div>
+          <button id="card-memory-next" aria-label="Next">→</button>
+        </div>
+      </section>
+
+      <section id="card-recall" class="screen" data-game="card">
+        <div class="recall-header">
+          <span id="card-recall-timer">3:00</span>
+          <span class="recall-hint">Click empty box to select, then click card to place</span>
+          <button id="card-submit-recall">Submit</button>
+        </div>
+        <div class="recall-grid recall-grid-cards">
+          <div id="card-recall-slots" class="recall-slots"></div>
+          <div id="card-recall-pool" class="recall-pool"></div>
+        </div>
+      </section>
+
+      <section id="card-stats" class="screen" data-game="card">
+        <h2>Results</h2>
+        <div id="card-stats-content"></div>
+        <div class="stats-actions">
+          <button id="card-play-again">Play Again</button>
+          <button id="card-stats-back">Back to Menu</button>
+        </div>
+      </section>
+    </div>
   </div>
   <script src="main.js" type="module"></script>
 </body>
