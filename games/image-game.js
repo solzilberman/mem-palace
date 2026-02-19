@@ -4,6 +4,13 @@
  */
 import { el, showScreen, formatTime, shuffle, runTimer } from '../utils.js';
 
+const STATIC_PHOTOS_API_CATEGORIES = ["nature", "office", "people", "technology", "cityscape", "workspace", "food", "travel", "textures", "industry", "indoor", "outdoor", "studio", "finance", "medical", "season", "holiday", "event", "sport", "science", "legal", "estate", "restaurant", "retail", "wellness", "agriculture", "construction", "craft", "cosmetic", "automotive", "gaming", "education"]
+
+function randomCategory() {
+  const randomIndex = Math.floor(Math.random() * STATIC_PHOTOS_API_CATEGORIES.length);
+  return STATIC_PHOTOS_API_CATEGORIES[randomIndex];
+}
+
 const PREFIX = 'image';
 const SCREENS = [`${PREFIX}-config`, `${PREFIX}-prepare`, `${PREFIX}-memory`, `${PREFIX}-recall`, `${PREFIX}-stats`];
 
@@ -35,29 +42,46 @@ function getImageUrl(id) {
   return state.images.find((i) => i.id === id)?.url ?? '';
 }
 
-function revokeBlobUrls() {
-  state.images.forEach((img) => {
-    if (img.url?.startsWith('blob:')) URL.revokeObjectURL(img.url);
-  });
+function randomImageSeed(seed) {
+  const salt = Date.now().toString(36);
+  return `${salt}-${seed}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-async function loadImages(count) {
+function imageUrlForSource(source, index) {
+  if (source === 'picsum') {
+    return `https://picsum.photos/300/300?random=${randomImageSeed(index)}`;
+  }
+  return `https://static.photos/${randomCategory()}/300x300/${randomImageSeed(index)}`;
+}
+
+async function generateImageSources(count, source) {
   return Array.from({ length: count }, (_, i) => ({
     id: `img-${Date.now()}-${i}`,
-    url: `https://picsum.photos/300/300?random=${Date.now()}-${i}`,
+    url: imageUrlForSource(source, i),
   }));
 }
 
-async function cacheImages(images, onProgress) {
-  const total = images.length;
+async function preload(urls, onProgress) {
   let done = 0;
+  const total = urls.length;
   await Promise.all(
-    images.map(async (img) => {
-      const res = await fetch(img.url);
-      img.url = URL.createObjectURL(await res.blob());
-      done++;
-      onProgress?.(done / total);
-    })
+    urls.map(
+      (u) =>
+        new Promise((res) => {
+          const img = new Image();
+          img.onload = () => {
+            done++;
+            onProgress?.(done / total);
+            res(true);
+          };
+          img.onerror = () => {
+            done++;
+            onProgress?.(done / total);
+            res(false);
+          };
+          img.src = u;
+        })
+    )
   );
 }
 
@@ -66,6 +90,7 @@ function initConfig(onBackToMenu) {
   el('image-config-form').onsubmit = (e) => {
     e.preventDefault();
     state.config = {
+      source: el('image-source').value,
       itemCount: +el('image-count').value,
       memoryTime: +el('image-memory-time').value,
       recallTime: +el('image-recall-time').value,
@@ -77,14 +102,16 @@ function initConfig(onBackToMenu) {
 }
 
 function startPrepare() {
-  revokeBlobUrls();
   state.loadingPromise = (async () => {
-    state.images = await loadImages(state.config.itemCount);
-    await cacheImages(state.images, (p) => {
-      el('image-prepare-loading-bar').style.width = `${p * 100}%`;
-      el('image-prepare-loading-text').textContent =
-        p >= 1 ? 'Ready' : `Loading images... ${Math.round(p * 100)}%`;
-    });
+    state.images = await generateImageSources(state.config.itemCount, state.config.source);
+    await preload(
+      state.images.map((i) => i.url),
+      (p) => {
+        el('image-prepare-loading-bar').style.width = `${p * 100}%`;
+        el('image-prepare-loading-text').textContent =
+          p >= 1 ? 'Ready' : `Loading images... ${Math.round(p * 100)}%`;
+      }
+    );
   })();
 
   let left = state.config.prepareTime;
@@ -315,7 +342,6 @@ function showStats(score) {
     <div class="sequence-compare">${compareHtml}</div>
   `;
   el('image-play-again').onclick = () => {
-    revokeBlobUrls();
     state.images = [];
     state.loadingPromise = null;
     el('image-memory-image').removeAttribute('src');
