@@ -410,18 +410,17 @@ button:hover {
 
 /* Full deck on card results */
 .deck-full {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(13, 1fr);
   gap: 0.35rem;
-  justify-content: center;
   width: 100%;
   max-width: 100%;
+  justify-items: center;
 }
 
 .deck-full .deck-card {
   width: 40px;
   height: 56px;
-  flex-shrink: 0;
   overflow: hidden;
   border: 2px solid transparent;
   border-radius: 2px;
