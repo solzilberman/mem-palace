@@ -1,28 +1,51 @@
 /**
  * Card Sequence Memory Game
  * Memorize a sequence of playing cards and recall them in order.
+ * Uses local SVG cards from assets/cards/ (Open Source Vector Playing Cards, totalnonsense.com, LGPL 3.0).
  */
 import { el, formatTime, shuffle, runTimer } from '../utils.js';
 
 const PREFIX = 'card';
-const DECK_API = 'https://www.deckofcardsapi.com/api/deck';
+const CARDS_BASE = 'assets/cards';
 
-async function fetchDeck() {
-  const res = await fetch(`${DECK_API}/new/shuffle/`);
-  const data = await res.json();
-  return data.deck_id;
+// Standard 52 cards: value A,2-10(0),J,Q,K × suits S,D,C,H (API codes: 0 = 10)
+const VALUES = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'J', 'Q', 'K'];
+const SUITS = ['S', 'D', 'C', 'H'];
+const FULL_DECK = SUITS.flatMap((suit) => VALUES.map((v) => v + suit));
+
+// Map API-style code to local filename (suit: S→s, D→d, C→c, H→h; value: A→01, 0→10, J→11, Q→12, K→13)
+function codeToPath(code) {
+  const valueChar = code.slice(0, 1);
+  const suitChar = code.slice(1, 2).toLowerCase();
+  const num =
+    valueChar === 'A' ? '01' : valueChar === '0' ? '10' : valueChar === 'J' ? '11' : valueChar === 'Q' ? '12' : valueChar === 'K' ? '13' : `0${valueChar}`;
+  return `${CARDS_BASE}/${suitChar}${num}.svg`;
 }
 
-async function drawCards(deckId, count) {
-  const res = await fetch(`${DECK_API}/${deckId}/draw/?count=${count}`);
-  const data = await res.json();
-  return data.cards.map((c, i) => ({
-    id: `${c.code}-${Date.now()}-${i}`,
-    code: c.code,
-    value: c.value,
-    suit: c.suit,
-    url: c.image,
-  }));
+const VALUE_NAMES = { A: 'Ace', '0': '10', J: 'Jack', Q: 'Queen', K: 'King' };
+function valueLabel(v) {
+  return VALUE_NAMES[v] ?? v;
+}
+const SUIT_NAMES = { S: 'Spades', D: 'Diamonds', C: 'Clubs', H: 'Hearts' };
+function suitLabel(s) {
+  return SUIT_NAMES[s] ?? s;
+}
+
+function codeToCard(code) {
+  const valueChar = code.slice(0, 1);
+  const suitChar = code.slice(1, 2);
+  return {
+    id: code,
+    code,
+    value: valueLabel(valueChar),
+    suit: suitLabel(suitChar),
+    url: codeToPath(code),
+  };
+}
+
+function drawCardsFromDeck(count) {
+  const shuffled = shuffle([...FULL_DECK]);
+  return shuffled.slice(0, count).map((code) => codeToCard(code));
 }
 
 const state = {
@@ -32,8 +55,6 @@ const state = {
   memoryTimerId: null,
   memoryElapsed: 0,
   recallSlots: [],
-  recallPool: [],
-  recallPoolOrder: [],
   recallTimerId: null,
   recallElapsed: 0,
   selectedSlotIndex: null,
@@ -48,8 +69,9 @@ function show(id) {
   document.querySelectorAll(`[data-game="${gameId}"]`).forEach((s) => s.classList.toggle('active', s.id === id));
 }
 
-function getCardUrl(id) {
-  return state.cards.find((c) => c.id === id)?.url ?? '';
+function getCardUrl(code) {
+  if (!code || !FULL_DECK.includes(code)) return '';
+  return codeToPath(code);
 }
 
 function initConfig(onBackToMenu) {
@@ -67,20 +89,14 @@ function initConfig(onBackToMenu) {
   };
 }
 
-async function startPrepare() {
+function startPrepare() {
   const countdownEl = el('card-prepare-countdown');
   const textEl = el('card-prepare-loading-text');
   countdownEl.textContent = state.config.prepareTime;
   textEl.textContent = 'Shuffling deck...';
 
-  try {
-    const deckId = await fetchDeck();
-    state.cards = await drawCards(deckId, state.config.itemCount);
-    textEl.textContent = 'Ready';
-  } catch (err) {
-    textEl.textContent = 'Error loading cards. Try again.';
-    return;
-  }
+  state.cards = drawCardsFromDeck(state.config.itemCount);
+  textEl.textContent = 'Ready';
 
   let left = state.config.prepareTime;
   const goToMemory = () => {
@@ -164,8 +180,6 @@ function goToRecall() {
   window.removeEventListener('keydown', memoryKeyHandler);
   clearInterval(state.memoryTimerId);
   state.recallSlots = Array(state.config.itemCount).fill(null);
-  state.recallPoolOrder = shuffle(state.cards.map((c) => c.id));
-  state.recallPool = [...state.recallPoolOrder];
   state.selectedSlotIndex = 0;
   state.recallElapsed = 0;
   show(`${PREFIX}-recall`);
@@ -181,36 +195,19 @@ function goToRecall() {
 
 let recallKeyHandler = null;
 
-function returnToPool(cardId) {
-  const idx = state.recallPoolOrder.indexOf(cardId);
-  if (idx >= 0) state.recallPool[idx] = cardId;
-}
-
 function onClickSlot(index) {
   const cardId = state.recallSlots[index];
-  if (cardId) {
-    state.recallSlots[index] = null;
-    returnToPool(cardId);
-  }
+  if (cardId) state.recallSlots[index] = null;
   state.selectedSlotIndex = index;
   renderRecall();
 }
 
-function onClickPool(poolIndex) {
+function onClickDeckCard(code) {
   if (state.selectedSlotIndex === null) return;
-  const cardId = state.recallPool[poolIndex];
-  if (!cardId) return;
-  state.recallPool[poolIndex] = null;
-  state.recallSlots[state.selectedSlotIndex] = cardId;
+  if (state.recallSlots.includes(code)) return;
+  state.recallSlots[state.selectedSlotIndex] = code;
   state.selectedSlotIndex =
     state.selectedSlotIndex + 1 < state.recallSlots.length ? state.selectedSlotIndex + 1 : null;
-  renderRecall();
-}
-
-function insertSlot(index) {
-  if (state.recallSlots.length >= state.config.itemCount * 2) return;
-  state.recallSlots.splice(index, 0, null);
-  state.selectedSlotIndex = index;
   renderRecall();
 }
 
@@ -223,31 +220,24 @@ function renderRecall() {
       <div class="slot-content" data-slot="${i}">
         ${cardId ? `<img src="${getCardUrl(cardId)}" alt="">` : ''}
       </div>
-      <span class="slot-number slot-number-clickable" data-insert="${i}">${i + 1}</span>
+      <span class="slot-number">${i + 1}</span>
     </div>`
     )
     .join('');
   slotsEl.querySelectorAll('.slot-content').forEach((node) => {
     node.onclick = () => onClickSlot(parseInt(node.dataset.slot, 10));
   });
-  slotsEl.querySelectorAll('[data-insert]').forEach((node) => {
-    node.onclick = (e) => {
-      e.stopPropagation();
-      insertSlot(parseInt(node.dataset.insert, 10));
-    };
-  });
 
-  const poolEl = el('card-recall-pool');
-  poolEl.innerHTML = state.recallPool
-    .map(
-      (cardId, i) => `
-    <div class="pool-item${cardId ? '' : ' pool-item-empty'}" data-pool="${i}">
-      ${cardId ? `<img src="${getCardUrl(cardId)}" alt="">` : '<div class="pool-item-blank"></div>'}
-    </div>`
-    )
-    .join('');
-  poolEl.querySelectorAll('.pool-item:not(.pool-item-empty)').forEach((node) => {
-    node.onclick = () => onClickPool(parseInt(node.dataset.pool, 10));
+  const usedCodes = new Set(state.recallSlots.filter(Boolean));
+  const deckEl = el('card-recall-deck');
+  deckEl.innerHTML = FULL_DECK.map(
+    (code) => {
+      const used = usedCodes.has(code);
+      return `<div class="deck-card ${used ? 'deck-card-used' : ''}" data-code="${code}"><img src="${getCardUrl(code)}" alt="${codeToCard(code).value} of ${codeToCard(code).suit}"></div>`;
+    }
+  ).join('');
+  deckEl.querySelectorAll('.deck-card:not(.deck-card-used)').forEach((node) => {
+    node.onclick = () => onClickDeckCard(node.dataset.code);
   });
 }
 
@@ -259,17 +249,12 @@ function bindRecallKeys() {
       return;
     }
     if (state.selectedSlotIndex === null) return;
-    if (e.key === '+' || e.key === '=') {
+    if (e.key === '-' || e.key === '_') {
       e.preventDefault();
-      insertSlot(state.selectedSlotIndex);
-    } else if (e.key === '-' || e.key === '_') {
-      e.preventDefault();
-      const id = state.recallSlots[state.selectedSlotIndex];
-      if (id) {
+      if (state.recallSlots[state.selectedSlotIndex]) {
         state.recallSlots[state.selectedSlotIndex] = null;
-        returnToPool(id);
+        renderRecall();
       }
-      renderRecall();
     }
   };
   window.addEventListener('keydown', recallKeyHandler);
@@ -298,11 +283,12 @@ function showStats(score) {
         `<img src="${getCardUrl(c)}" alt="" class="card-thumb ${c === answered[i] ? 'correct' : 'wrong'}">`
     )
     .join('');
+
   el('card-stats-content').innerHTML = `
     <p class="stats-row"><strong>Score:</strong> ${score} / ${state.config.itemCount}</p>
     <p class="stats-row"><strong>Memorization time:</strong> ${state.memoryElapsed}s</p>
     <p class="stats-row"><strong>Recall time:</strong> ${state.recallElapsed}s</p>
-    <p class="stats-row"><strong>Correct sequence:</strong></p>
+    <p class="stats-row"><strong>Your sequence:</strong></p>
     <div class="sequence-compare sequence-compare-cards">${compareHtml}</div>
   `;
   el('card-play-again').onclick = () => {

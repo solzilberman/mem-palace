@@ -24,8 +24,8 @@
         <form id="image-config-form">
           <label>Image source
             <select id="image-source">
-              <option value="picsum">Picsum</option>
               <option value="staticphotos">Static Photos</option>
+              <option value="picsum">Picsum</option>
             </select>
           </label>
           <label>Number of images
@@ -67,6 +67,7 @@
           </div>
           <button id="image-memory-next" aria-label="Next">→</button>
         </div>
+        <div id="image-memory-gallery" class="memory-gallery" aria-label="Images"></div>
       </section>
 
       <section id="image-recall" class="screen" data-game="image">
@@ -145,8 +146,9 @@
         </div>
         <div class="recall-grid recall-grid-cards">
           <div id="card-recall-slots" class="recall-slots"></div>
-          <div id="card-recall-pool" class="recall-pool"></div>
         </div>
+        <p class="recall-deck-label">Select from full deck:</p>
+        <div id="card-recall-deck" class="deck-full deck-full-clickable" aria-label="Full deck of 52 cards"></div>
       </section>
 
       <section id="card-stats" class="screen" data-game="card">

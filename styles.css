@@ -200,6 +200,44 @@ button:hover {
   color: #888;
 }
 
+.memory-gallery {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0;
+  overflow-x: auto;
+  padding: 0.5rem 0;
+  margin-top: 1.5rem;
+  min-height: 80px;
+  align-items: center;
+}
+
+.memory-gallery-item {
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  margin-left: -24px;
+  border: 2px solid #404040;
+  border-radius: 6px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.memory-gallery-item:first-child {
+  margin-left: 0;
+}
+
+.memory-gallery-item.memory-gallery-current {
+  border-color: var(--accent, #6b9fff);
+  box-shadow: 0 0 0 2px var(--accent, #6b9fff);
+}
+
+.memory-gallery-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
 /* Recall */
 .recall-header {
   width: 100%;
@@ -368,4 +406,55 @@ button:hover {
 
 .sequence-compare img.wrong {
   border-color: #a44;
+}
+
+/* Full deck on card results */
+.deck-full {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  justify-content: center;
+  width: 100%;
+  max-width: 100%;
+}
+
+.deck-full .deck-card {
+  width: 40px;
+  height: 56px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border: 2px solid transparent;
+  border-radius: 2px;
+}
+
+.deck-full .deck-card-in-round {
+  border-color: #606060;
+  box-shadow: 0 0 0 1px #404040;
+}
+
+.deck-full .deck-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.deck-full-clickable .deck-card:not(.deck-card-used) {
+  cursor: pointer;
+}
+
+.deck-full-clickable .deck-card:not(.deck-card-used):hover {
+  border-color: #808080;
+  box-shadow: 0 0 0 2px #505050;
+}
+
+.deck-card.deck-card-used {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.recall-deck-label {
+  margin: 0.5rem 0 0.25rem;
+  font-size: 0.9rem;
+  color: #888;
 }

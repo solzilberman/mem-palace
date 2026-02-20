@@ -1,0 +1,6 @@
+Vector Playing Cards 3.0
+https://totalnonsense.com/open-source-vector-playing-cards/
+Copyright 2011, 2019 – Chris Aguilar – conjurenation@gmail.com
+Licensed under: LGPL 3.0 - https://www.gnu.org/licenses/lgpl-3.0.html
+
+Downloaded from: https://github.com/lemehmet/playing-cards (color-happy set)

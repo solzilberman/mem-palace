@@ -25,8 +25,8 @@ function show(id) {
 const state = {
   config: {},
   images: [],
-  loadingPromise: null,
   memoryIndex: 0,
+  loadingPromise: null,
   memoryTimerId: null,
   memoryElapsed: 0,
   recallSlots: [],
@@ -35,7 +35,6 @@ const state = {
   recallTimerId: null,
   recallElapsed: 0,
   selectedSlotIndex: null,
-  lastNextPress: 0,
 };
 
 function getImageUrl(id) {
@@ -135,32 +134,38 @@ function startPrepare() {
 
 let memoryKeyHandler = null;
 
+function memoryNext() {
+  if (state.memoryIndex < state.images.length - 1) {
+    state.memoryIndex++;
+    renderMemoryView();
+  }
+}
+
+function memoryPrev() {
+  if (state.memoryIndex > 0) {
+    state.memoryIndex--;
+    renderMemoryView();
+  }
+}
+
+function memoryReset() {
+  state.memoryIndex = 0;
+  renderMemoryView();
+}
+
 function startMemory() {
   state.memoryIndex = 0;
   state.memoryElapsed = 0;
   show(`${PREFIX}-memory`);
-  renderMemoryImage();
+  renderMemoryView();
   bindMemoryButtons();
 
   memoryKeyHandler = (e) => {
-    if (e.key === 'ArrowRight') {
-      if (state.memoryIndex === state.images.length - 1) {
-        if (Date.now() - state.lastNextPress < 400) goToRecall();
-        else state.lastNextPress = Date.now();
-      } else {
-        state.memoryIndex++;
-        renderMemoryImage();
-      }
-    } else if (e.key === 'ArrowLeft' && state.memoryIndex > 0) {
-      state.memoryIndex--;
-      renderMemoryImage();
-    } else if (e.key === ' ' || e.key === 'ArrowUp') {
+    if (e.key === 'ArrowRight') memoryNext();
+    else if (e.key === 'ArrowLeft') memoryPrev();
+    else if (e.key === ' ' || e.key === 'ArrowUp') {
       e.preventDefault();
-      state.memoryIndex = 0;
-      renderMemoryImage();
-    } else if (e.key === 'Enter') {
-      e.preventDefault();
-      goToRecall();
+      memoryReset();
     }
   };
   window.addEventListener('keydown', memoryKeyHandler);
@@ -171,28 +176,28 @@ function startMemory() {
   }, goToRecall);
 }
 
-function renderMemoryImage() {
-  const img = state.images[state.memoryIndex];
-  el('image-memory-image').src = img.url;
-  el('image-memory-position').textContent = `${state.memoryIndex + 1} / ${state.images.length}`;
+function renderMemoryView() {
+  const current = state.images[state.memoryIndex];
+  el('image-memory-image').src = current.url;
+  const total = state.images.length;
+  el('image-memory-position').textContent = `${state.memoryIndex + 1} / ${total}`;
+
+  const galleryEl = el('image-memory-gallery');
+  galleryEl.innerHTML = state.images
+    .map(
+      (img, i) =>
+        `<div class="memory-gallery-item${i === state.memoryIndex ? ' memory-gallery-current' : ''}">
+          <img src="${img.url}" alt="">
+        </div>`
+    )
+    .join('');
+  const currentThumb = galleryEl.querySelector('.memory-gallery-current');
+  if (currentThumb) currentThumb.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
 }
 
 function bindMemoryButtons() {
-  el('image-memory-prev').onclick = () => {
-    if (state.memoryIndex > 0) {
-      state.memoryIndex--;
-      renderMemoryImage();
-    }
-  };
-  el('image-memory-next').onclick = () => {
-    if (state.memoryIndex < state.images.length - 1) {
-      state.memoryIndex++;
-      renderMemoryImage();
-    } else {
-      if (Date.now() - state.lastNextPress < 400) goToRecall();
-      else state.lastNextPress = Date.now();
-    }
-  };
+  el('image-memory-prev').onclick = memoryPrev;
+  el('image-memory-next').onclick = memoryNext;
   el('image-finished-btn').onclick = goToRecall;
 }
 
